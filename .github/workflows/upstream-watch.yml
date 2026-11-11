@@ -1,0 +1,81 @@
+name: Upstream Watch
+
+# Weekly: compare upstream ThomasKur/M365Documentation main HEAD against our
+# pinned commit SHA in mantle/UPSTREAM_PIN.md. Upstream publishes neither
+# releases nor tags, so we track commit-SHA drift. Opens a GitHub issue when
+# drift exists. Never auto-merges.
+
+on:
+  schedule:
+    - cron: '0 13 * * 1'  # Monday 13:00 UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Add upstream remote + fetch
+        run: |
+          set -euo pipefail
+          git remote add upstream https://github.com/ThomasKur/M365Documentation.git || true
+          git fetch upstream main
+
+      - name: Compare pinned SHA against upstream main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          PINNED=$(grep -Eo 'commit `[0-9a-f]{40}`' mantle/UPSTREAM_PIN.md | head -1 | tr -d '`' | sed 's/commit //')
+          HEAD=$(git rev-parse upstream/main)
+
+          echo "Pinned: ${PINNED}"
+          echo "Upstream main: ${HEAD}"
+
+          if [ "${PINNED}" = "${HEAD}" ]; then
+            echo "Pin is current. No action needed."
+            exit 0
+          fi
+
+          SHORT_PIN="${PINNED:0:7}"
+          SHORT_HEAD="${HEAD:0:7}"
+
+          EXISTING=$(gh issue list --label upstream-sync --state open \
+            --search "in:title ${SHORT_HEAD}" --json number --jq 'length')
+          if [ "${EXISTING}" -gt 0 ]; then
+            echo "Issue already exists for drift ending at ${SHORT_HEAD}."
+            exit 0
+          fi
+
+          COMMITS=$(git log --oneline "${PINNED}..${HEAD}" | head -30)
+
+          BODY=$(cat <<EOF
+          Upstream **ThomasKur/M365Documentation** has drifted since our pinned SHA.
+
+          - Pinned: \`${PINNED}\`
+          - Current \`upstream/main\`: \`${HEAD}\`
+          - Compare: https://github.com/ThomasKur/M365Documentation/compare/${PINNED}...${HEAD}
+
+          Commits since pin (up to 30):
+
+          \`\`\`
+          ${COMMITS}
+          \`\`\`
+
+          Walk \`mantle/SYNC_CHECKLIST.md\` before merging. Do not auto-merge.
+          EOF
+          )
+
+          gh issue create \
+            --title "Upstream drift: ${SHORT_PIN}..${SHORT_HEAD}" \
+            --body "${BODY}" \
+            --label upstream-sync
