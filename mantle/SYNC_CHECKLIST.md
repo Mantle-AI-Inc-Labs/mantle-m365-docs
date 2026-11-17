@@ -11,13 +11,13 @@ Walk this checklist before merging upstream drift into `main`.
 ## 2. Collector surface changes
 
 - [ ] Did upstream add new `Get-*.ps1` collectors? If yes, review for inclusion in Mantle's standard tier (baseline / full) via the next catalog update.
-- [ ] Did upstream remove or rename existing collectors? If yes: update `mantle-m365-render/config_reference_projection.json` so the curation catalog doesn't reference stale section names.
+- [ ] Did upstream remove or rename existing collectors? If yes: update `mantle-m365-assessment/config_reference_projection.json` so the curation catalog doesn't reference stale section names.
 - [ ] Did upstream change the Graph endpoint for any collector? If yes: update the scope list used by the orchestrator's `Connect-MgGraph` call.
 
 ## 3. JSON tree changes
 
-- [ ] Did upstream change the structure of `Write-M365DocJson` output? If yes: bump `mantle-m365-render`'s input-schema version.
-- [ ] Did upstream modify any `Data/LabelTranslation/*.json` entry? If yes: re-vendor the affected file into `mantle-m365-render/src/mantle_render/translation_data/` and note in `DIVERGENCES.md` if any Mantle customization was overwritten.
+- [ ] Did upstream change the structure of `Write-M365DocJson` output? If yes: bump `mantle-m365-assessment`'s input-schema version.
+- [ ] Did upstream modify any `Data/LabelTranslation/*.json` entry? If yes: re-vendor the affected file into `mantle-m365-assessment/src/mantle_render/translation_data/` and note in `DIVERGENCES.md` if any Mantle customization was overwritten.
 
 ## 4. Mantle patch compatibility
 

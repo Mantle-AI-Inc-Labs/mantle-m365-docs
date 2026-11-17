@@ -20,7 +20,7 @@ Entries are reverse-chronological. Use H2 for each divergence.
 
 - **Files:** `README.md` (notice block above the upstream content)
 - **Upstream version last reviewed:** `963b74b0afe43a3bef14357807196eb0feeee7f5`
-- **Rationale:** The fork's README is otherwise the upstream project's, with upstream run instructions. Mantle staff opening this repo need to know that client engagements run through `mantle-engagement` in mantle-m365-render, and that this repo is run directly only for patch development and upstream syncs.
+- **Rationale:** The fork's README is otherwise the upstream project's, with upstream run instructions. Mantle staff opening this repo need to know that client engagements run through `mantle-engagement` in mantle-m365-assessment, and that this repo is run directly only for patch development and upstream syncs.
 - **Cost of carrying:** Minimal. The notice sits above the upstream content; on sync, keep it at the top if upstream rewrites the README's opening lines.
 - **Upstream issue / PR:** Not applicable (Mantle-specific).
 - **Introduced:** 2026-11-17, fork PR #4 (`mantle/readme-entry-point` branch)
@@ -44,7 +44,7 @@ Entries are reverse-chronological. Use H2 for each divergence.
   - `PSModule/M365Documentation/Functions/Connect-M365Doc.ps1`
   - `PSModule/Tests/Connect-M365Doc.RawToken.Tests.ps1` (new)
 - **Upstream version last reviewed:** `963b74b0afe43a3bef14357807196eb0feeee7f5`
-- **Rationale:** The Mantle engagement orchestrator runs `mantle-m365-audit` and `mantle-m365-docs` back-to-back against the same tenant. Upstream `Connect-M365Doc` only accepts an MSAL.PS-acquired token (`CustomToken` parameter set typed to `Microsoft.Identity.Client.AuthenticationResult`), which forces a second browser consent after the Microsoft.Graph session the audit fork already authenticated. The new `RawToken` parameter set lets the orchestrator extract the raw bearer from the live MgGraph session and hand it directly to Connect-M365Doc, giving the operator one browser consent instead of two.
+- **Rationale:** The Mantle engagement orchestrator runs `mantle-m365-safeguards-audit` and `mantle-m365-docs` back-to-back against the same tenant. Upstream `Connect-M365Doc` only accepts an MSAL.PS-acquired token (`CustomToken` parameter set typed to `Microsoft.Identity.Client.AuthenticationResult`), which forces a second browser consent after the Microsoft.Graph session the audit fork already authenticated. The new `RawToken` parameter set lets the orchestrator extract the raw bearer from the live MgGraph session and hand it directly to Connect-M365Doc, giving the operator one browser consent instead of two.
 - **Cost of carrying:** Low. Patch is additive — introduces a new parameter set, does not modify existing parameter sets. Likely to merge cleanly on upstream syncs unless upstream refactors the param block. Pester test covers the new path.
 - **Upstream issue / PR:** None opened yet. If this proves durable, submit upstream so this entry can be dropped.
 - **Introduced:** 2026-11-11, fork PR #1 (`mantle/connect-reuse-token` branch)
