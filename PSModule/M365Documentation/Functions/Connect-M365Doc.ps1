@@ -49,7 +49,7 @@ Function Connect-M365Doc(){
     Accept a raw bearer token the caller already has from Connect-MgGraph or
     any other Graph session. Lets the Mantle engagement orchestrator run one
     Connect-MgGraph browser consent and reuse the resulting token for both
-    mantle-m365-audit and mantle-m365-docs collections. See Mantle divergence
+    mantle-m365-safeguards-audit and mantle-m365-docs collections. See Mantle divergence
     ledger (mantle/DIVERGENCES.md) for rationale.
 #>
   
@@ -77,7 +77,7 @@ Function Connect-M365Doc(){
     # ---------- Mantle enrichment (RawToken parameter set) ----------
     # Accept a raw bearer-token string the caller already owns (e.g. from
     # Connect-MgGraph). Avoids a second MSAL.PS browser consent round when
-    # running mantle-m365-docs back-to-back with mantle-m365-audit under the
+    # running mantle-m365-docs back-to-back with mantle-m365-safeguards-audit under the
     # Mantle engagement orchestrator. The token is used only for Graph calls
     # via Invoke-DocGraph, which reads $script:token.AccessToken.
     [parameter(Mandatory=$true, ParameterSetName='RawToken')]
