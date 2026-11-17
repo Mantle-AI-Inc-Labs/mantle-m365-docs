@@ -38,8 +38,19 @@ Function Connect-M365Doc(){
     You can pass a token you have aquired seperately via Get-MsalToken. You have to make sure, that this token has all required scopes included.
 .EXAMPLE PublicClient-Silent
     Connect-M365Doc -ClientId '00000000-0000-0000-0000-000000000000' -ClientSecret (ConvertTo-SecureString 'SuperSecretString' -AsPlainText -Force) -TenantId '00000000-0000-0000-0000-000000000000'
-    
+
     Get token based on the submitted information. You can creat the app registration in your tenant by using the New-DocumentationAppRegistration command.
+
+.EXAMPLE RawToken (Mantle enrichment)
+    Connect-MgGraph -Scopes 'Directory.Read.All','DeviceManagementConfiguration.Read.All'
+    # ... caller extracts the raw bearer token from the MgGraph session ...
+    Connect-M365Doc -AccessToken $rawBearer -TokenExpiresOn (Get-Date).AddMinutes(55)
+
+    Accept a raw bearer token the caller already has from Connect-MgGraph or
+    any other Graph session. Lets the Mantle engagement orchestrator run one
+    Connect-MgGraph browser consent and reuse the resulting token for both
+    mantle-m365-audit and mantle-m365-docs collections. See Mantle divergence
+    ledger (mantle/DIVERGENCES.md) for rationale.
 #>
   
   param(
@@ -62,7 +73,18 @@ Function Connect-M365Doc(){
     [parameter(Mandatory=$false, ParameterSetName='PublicClient-Silent')]
     [switch]$NeverRefreshToken,
     [parameter(Mandatory=$false, ParameterSetName='Interactive')]
-    [switch]$Force
+    [switch]$Force,
+    # ---------- Mantle enrichment (RawToken parameter set) ----------
+    # Accept a raw bearer-token string the caller already owns (e.g. from
+    # Connect-MgGraph). Avoids a second MSAL.PS browser consent round when
+    # running mantle-m365-docs back-to-back with mantle-m365-audit under the
+    # Mantle engagement orchestrator. The token is used only for Graph calls
+    # via Invoke-DocGraph, which reads $script:token.AccessToken.
+    [parameter(Mandatory=$true, ParameterSetName='RawToken')]
+    [ValidateNotNullOrEmpty()]
+    [string]$AccessToken,
+    [parameter(Mandatory=$false, ParameterSetName='RawToken')]
+    [DateTime]$TokenExpiresOn = (Get-Date).AddMinutes(55)
   )
   # ---------- Map environment to endpoints ----------
   switch ($CloudEnvironment) {
@@ -77,6 +99,24 @@ Function Connect-M365Doc(){
   $script:M365Doc_GraphBase        = $GraphBase
 
   switch -Wildcard ($PSCmdlet.ParameterSetName) {
+      "RawToken" {
+          # Mantle enrichment — shim a raw bearer token into the shape the
+          # rest of the module expects: an object with .AccessToken (used by
+          # Invoke-DocGraph) and .ExpiresOn.LocalDateTime (used by
+          # Test-TokenExpiration). We do NOT refresh this token; the caller
+          # owns refresh. If it expires mid-run, Invoke-DocGraph will surface
+          # the 401 and the orchestrator can re-acquire.
+          if ($TokenExpiresOn -le (Get-Date)) {
+              Write-Error "AccessToken already expired at $TokenExpiresOn; refresh and retry."
+              return
+          }
+          $script:token = [PSCustomObject]@{
+              AccessToken = $AccessToken
+              ExpiresOn   = [PSCustomObject]@{ LocalDateTime = $TokenExpiresOn }
+          }
+          Write-Verbose "RawToken accepted, expires: $TokenExpiresOn"
+          break
+      }
       "CustomToken" {
           # Verify token
           if ($token.ExpiresOn.LocalDateTime -le $(Get-Date)) {
