@@ -25,7 +25,7 @@ Entries are reverse-chronological. Use H2 for each divergence.
 - **Rationale:** On Forbidden and Unauthorized responses, upstream logs a warning and then returns `$value`, which at that point holds the caught `ErrorRecord`. Collectors store it as section data. `Write-M365DocJson` then serializes the error's exception, method, and assembly metadata to depth 20; on a test tenant with ~20 forbidden sections the process grew past 3.7 GB without finishing the file. The fix returns `$null`, matching upstream's existing `AadPremiumLicenseRequired` branch, so forbidden sections are skipped with their warning instead of polluting the output.
 - **Cost of carrying:** Low. Two `return $null` lines inside existing branches. A conflict is likely only if upstream rewrites the catch block, which would probably fix the bug itself.
 - **Upstream issue / PR:** None opened yet. This is a plain upstream bug and should be reported to ThomasKur/M365Documentation so the entry can be dropped.
-- **Introduced:** 2026-11-17, fork PR #2 (`mantle/docgraph-error-records` branch, stacked on `mantle/connect-reuse-token`)
+- **Introduced:** 2026-11-17, fork PR #3 (`mantle/docgraph-error-records` branch; #2 was closed when its stacked base branch was deleted)
 - **Review date:** 2027-02-17
 
 ## Connect-M365Doc RawToken parameter set
