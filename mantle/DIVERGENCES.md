@@ -23,7 +23,7 @@ Entries are reverse-chronological. Use H2 for each divergence.
 - **Rationale:** The fork's README is otherwise the upstream project's, with upstream run instructions. Mantle staff opening this repo need to know that client engagements run through `mantle-engagement` in mantle-m365-render, and that this repo is run directly only for patch development and upstream syncs.
 - **Cost of carrying:** Minimal. The notice sits above the upstream content; on sync, keep it at the top if upstream rewrites the README's opening lines.
 - **Upstream issue / PR:** Not applicable (Mantle-specific).
-- **Introduced:** 2026-11-17, fork PR TBD (`mantle/readme-entry-point` branch)
+- **Introduced:** 2026-11-17, fork PR #4 (`mantle/readme-entry-point` branch)
 - **Review date:** 2027-02-17
 
 ## Invoke-DocGraph returns nothing on 403 / 401
