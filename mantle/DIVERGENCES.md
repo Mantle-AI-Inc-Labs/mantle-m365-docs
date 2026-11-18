@@ -27,7 +27,7 @@ Entries are reverse-chronological. Use H2 for each divergence.
 - **Rationale:** MSAL.PS (4.37.0) has been unmaintained since 2021 and its identity library conflicts with the Microsoft Graph SDK's when both load in one session. mantle-engagement always passes a raw token (`Connect-M365Doc -AccessToken`), so it never needs MSAL.PS. The module now loads MSAL.PS only for the interactive, client-secret, and custom-token sign-in paths, which still work as before when MSAL.PS is installed.
 - **Cost of carrying:** Low. Conflicts are possible if upstream edits the manifest's `RequiredModules`, the dependency block in the `.psm1`, or `Connect-M365Doc`'s parameter block. The manifest and `.psm1` carry upstream signature blocks, which these edits invalidate; that already applied to earlier Mantle patches and only matters under an AllSigned execution policy.
 - **Upstream issue / PR:** Candidate for upstream together with the RawToken parameter set.
-- **Introduced:** 2026-11-17, fork PR TBD (`mantle/msal-optional` branch)
+- **Introduced:** 2026-11-17, fork PR #6 (`mantle/msal-optional` branch)
 - **Review date:** 2027-02-17
 
 ## README notice pointing to mantle-engagement
