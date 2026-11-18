@@ -60,7 +60,9 @@ Function Connect-M365Doc(){
     [ValidateSet('Commercial','USGov','USGovDoD')]
     [string] $CloudEnvironment = 'Commercial',
     [parameter(Mandatory=$true, ParameterSetName='CustomToken')]
-    [Microsoft.Identity.Client.AuthenticationResult]$token,
+    # Typed by name so calling with -AccessToken does not require MSAL.PS to be loaded.
+    [ValidateScript({ $_.GetType().FullName -eq 'Microsoft.Identity.Client.AuthenticationResult' })]
+    [object]$token,
     [parameter(Mandatory=$true, ParameterSetName='PublicClient-Silent')]
     [CmdletBinding(DefaultParameterSetName = 'Interactive-Custom')]
     [guid]$ClientID,
@@ -97,6 +99,11 @@ Function Connect-M365Doc(){
   # Publish for the rest of the module (used by Invoke-DocGraph, etc.)
   $script:M365Doc_CloudEnvironment = $CloudEnvironment
   $script:M365Doc_GraphBase        = $GraphBase
+
+  # Only the MSAL-based sign-in paths need MSAL.PS; a caller-supplied raw token does not.
+  if ($PSCmdlet.ParameterSetName -ne 'RawToken' -and -not (Get-Module -Name MSAL.PS)) {
+      Import-Module -Name MSAL.PS -ErrorAction Stop
+  }
 
   switch -Wildcard ($PSCmdlet.ParameterSetName) {
       "RawToken" {

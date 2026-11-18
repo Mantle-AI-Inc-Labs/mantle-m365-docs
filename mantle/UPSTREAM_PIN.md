@@ -16,5 +16,5 @@
 
 1. The upstream-watcher issue summarizes commits since the pinned SHA.
 2. Walk `mantle/SYNC_CHECKLIST.md`.
-3. Create branch `upstream-sync/<new-sha-prefix>`, merge `upstream/main` to the new pin SHA, re-apply all patches from `mantle/DIVERGENCES.md`, run tests.
+3. Create branch `upstream-sync/<new-sha-prefix>` and merge the new upstream SHA; the Mantle patches on `main` carry forward, so resolve conflicts and run the verification steps in the checklist.
 4. Update this file + open a PR to `main`.

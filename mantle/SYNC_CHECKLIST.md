@@ -1,41 +1,42 @@
-# Upstream Sync Impact Assessment — mantle-m365-docs
+# Upstream Sync Checklist — mantle-m365-docs
 
-Walk this checklist before merging upstream drift into `main`.
+Walk this whenever upstream moves before merging it into `main`. ThomasKur/M365Documentation publishes no releases or tags, so the weekly `upstream-watch` workflow compares upstream `main` with the commit pinned in `mantle/UPSTREAM_PIN.md` and opens an issue in this repo when they differ.
 
-## 1. Engagement impact
+## 1. Read what changed
 
-- [ ] Which clients are currently engaged?
-- [ ] Do any in-flight Config Reference deliverables depend on collectors in the changed set?
-- [ ] If yes: hold the sync until the engagement ships, OR scope the sync to non-affected collectors.
+- [ ] Read the commit list and compare link in the watcher issue.
+- [ ] Check whether upstream touched any file listed in `mantle/DIVERGENCES.md`. Expect merge conflicts there, and decide per entry: keep it, adapt it, or drop it because upstream now covers it (then delete the entry).
 
-## 2. Collector surface changes
+## 2. Engagement timing
 
-- [ ] Did upstream add new `Get-*.ps1` collectors? If yes, review for inclusion in Mantle's standard tier (baseline / full) via the next catalog update.
-- [ ] Did upstream remove or rename existing collectors? If yes: update `mantle-m365-assessment/config_reference_projection.json` so the curation catalog doesn't reference stale section names.
-- [ ] Did upstream change the Graph endpoint for any collector? If yes: update the scope list used by the orchestrator's `Connect-MgGraph` call.
+- [ ] If a client engagement is mid-collection, finish it on the current pin first.
 
-## 3. JSON tree changes
-
-- [ ] Did upstream change the structure of `Write-M365DocJson` output? If yes: bump `mantle-m365-assessment`'s input-schema version.
-- [ ] Did upstream modify any `Data/LabelTranslation/*.json` entry? If yes: re-vendor the affected file into `mantle-m365-assessment/src/mantle_render/translation_data/` and note in `DIVERGENCES.md` if any Mantle customization was overwritten.
-
-## 4. Mantle patch compatibility
-
-- [ ] Does the upstream drift conflict with any patch in `DIVERGENCES.md`?
-- [ ] The high-priority patch to watch is the `Connect-M365Doc -ExistingMgGraphContext` enhancement — if `Connect-M365Doc.ps1` changed upstream, re-apply carefully.
-
-## 5. Regression test
-
-- [ ] Run the sync branch's collectors against a known-state reference tenant (sandbox) and compare the JSON tree diff.
-- [ ] Zero unexpected diffs required before merge.
-
-## Merge workflow
+## 3. Merge on a branch
 
 ```bash
-git checkout -b upstream-sync/<sha-prefix>
+git switch -c upstream-sync/<sha-prefix> main
 git fetch upstream
-git merge upstream/main
-# re-apply patches from mantle/DIVERGENCES.md
-# run tests
-# PR to main of fork with this checklist completed in the PR body
+git merge <upstream commit SHA>
 ```
+
+The Mantle patches are already on `main`, so the merge carries them forward; resolve any conflicts so that every `DIVERGENCES.md` entry still works.
+
+## 4. Verify
+
+- [ ] Mantle tests: `pwsh -NoProfile -Command "Invoke-Pester -Path ./PSModule/Tests/Connect-M365Doc.RawToken.Tests.ps1,./PSModule/Tests/Connect-M365Doc.MsalOptional.Tests.ps1,./PSModule/Tests/Invoke-DocGraph.ErrorHandling.Tests.ps1"`.
+- [ ] Full suite: `pwsh -NoProfile -Command "Invoke-Pester -Path ./PSModule/Tests"`, then compare the failure list with the baseline below. Only new failures matter.
+- [ ] In mantle-m365-assessment, `uv run mantle-engagement doctor` reports every Mantle patch present.
+- [ ] Live run against the test tenant: `uv run mantle-engagement run test-tenant --tenant <test tenant>`, then open the Tenant Configuration report in the delivery package.
+
+### Known upstream test failures (baseline)
+
+On PowerShell 7 (checked on macOS, 2026-11-17, upstream `963b74b`), 32 upstream tests fail with or without the Mantle patches. Upstream runs no CI for these tests.
+
+- 25 fail with `Unable to find type [DocSection]`: the test files extract the module's classes from the `.psm1` and run them as a scriptblock created at run time, and PowerShell 7 does not resolve those class names in the collector files dot-sourced afterwards. Affected: `CloudPrintAndInformationProtection`, `Copilot`, `Invoke-DocGraph`, `Optimize-M365Doc`, and most of `Write-M365DocWord`.
+- 7 assert Windows or Word-dependency behavior (`WordDependencyLoading`, parts of `Write-M365DocWord`).
+
+## 5. Record and merge
+
+- [ ] Update `mantle/UPSTREAM_PIN.md` (commit SHA, published date, review date, reviewer) and this baseline if it changed.
+- [ ] Update "Upstream version last reviewed" on each `DIVERGENCES.md` entry.
+- [ ] Open a PR to `main` with this checklist completed in the body, merge it, and close the watcher issue.
